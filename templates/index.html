@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System API Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Solar System</h1>
+        <div class="solar-system">
+            <div class="sun"></div>
+            <div class="orbit mercury-orbit">
+                <div class="planet mercury" data-planet="mercury"></div>
+            </div>
+            <div class="orbit venus-orbit">
+                <div class="planet venus" data-planet="venus"></div>
+            </div>
+            <div class="orbit earth-orbit">
+                <div class="planet earth" data-planet="earth"></div>
+            </div>
+            <div class="orbit mars-orbit">
+                <div class="planet mars" data-planet="mars"></div>
+            </div>
+            <div class="orbit jupiter-orbit">
+                <div class="planet jupiter" data-planet="jupiter"></div>
+            </div>
+            <div class="orbit saturn-orbit">
+                <div class="planet saturn" data-planet="saturn"></div>
+            </div>
+            <div class="orbit uranus-orbit">
+                <div class="planet uranus" data-planet="uranus"></div>
+            </div>
+            <div class="orbit neptune-orbit">
+                <div class="planet neptune" data-planet="neptune"></div>
+            </div>
+        </div>
+
+        <div class="planet-info" id="planetInfo">
+            <div class="close-btn">&times;</div>
+            <h2 id="planetName"></h2>
+            <div class="info-content">
+                <p><strong>Type:</strong> <span id="planetType"></span></p>
+                <p><strong>Distance from Sun:</strong> <span id="planetDistance"></span></p>
+                <p><strong>Diameter:</strong> <span id="planetDiameter"></span></p>
+                <p><strong>Day Length:</strong> <span id="planetDay"></span></p>
+                <p><strong>Year Length:</strong> <span id="planetYear"></span></p>
+                <p><strong>Description:</strong> <span id="planetDescription"></span></p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
