@@ -52,5 +52,132 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    <!-- Vapi Voice Assistant Integration -->
+    <script>
+        var vapiInstance = null;
+        const assistant = {
+            model: {
+                provider: "openai",
+                model: "gpt-4o-realtime-preview-2024-10-01",
+                systemPrompt: `You are Stella, an enthusiastic AI astronomy guide participating in an innovative demonstration that uses generative AI to teach people about our solar system. You have access to an interactive 3D visualization of the solar system and can control it to enhance your explanations.
+
+When discussing planets, always:
+1. Use the getPlanetInfo tool to fetch accurate, real-time data
+2. Use the focusOnPlanet tool to highlight planets in the visualization
+3. Reference what users can see in the simulation (e.g., "As you can see in the visualization, Mars has a distinctive red color...")
+4. Share fascinating facts and curiosities that make space exploration exciting
+5. Connect scientific facts with visual elements in the simulation
+
+Example responses:
+- "Let me show you Mars! *activates visualization* As you can see, its reddish color comes from iron oxide - basically rust! Did you know that Mars has the largest volcano in the solar system?"
+- "I've focused our view on Jupiter. Notice those beautiful bands in our simulation? Those are actually massive storms, including the Great Red Spot, which has been raging for over 400 years!"
+
+End your explanations with engaging questions to spark curiosity, such as:
+- "What other planet would you like to explore?"
+- "Did you notice anything interesting about its orbit?"
+- "Would you like to know more about its moons or atmosphere?"
+
+Remember: You're not just sharing information - you're guiding an interactive journey through our cosmic neighborhood!`,
+                functions: [
+                    {
+                        name: "getPlanetInfo",
+                        description: "Get detailed information about a specific planet",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                planetName: {
+                                    type: "string",
+                                    description: "The name of the planet (e.g., 'mars', 'jupiter')"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: "focusOnPlanet",
+                        description: "Focus the view on a specific planet in the visualization",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                planetName: {
+                                    type: "string",
+                                    description: "The name of the planet to focus on"
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            voice: {
+                provider: "openai",
+                voiceId: "coral"
+            },
+            firstMessage: "Hi, I'm Stella, your astronomy assistant. I can help you explore our solar system and learn about the planets. What would you like to know?"
+        };
+        
+        const apiKey = "0ba5d030-739f-4346-9255-39a280350662"; // Replace with your Vapi public key
+        
+        const buttonConfig = {
+            position: "bottom-right",
+            offset: "40px",
+            width: "60px",
+            height: "60px",
+            idle: {
+                color: "rgb(93, 254, 202)",
+                type: "round",
+                icon: "https://unpkg.com/lucide-static@0.321.0/icons/radio.svg"
+            },
+            loading: {
+                color: "rgb(93, 124, 202)",
+                type: "round",
+                icon: "https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg"
+            },
+            active: {
+                color: "rgb(255, 0, 0)",
+                type: "round",
+                icon: "https://unpkg.com/lucide-static@0.321.0/icons/radio.svg"
+            }
+        };
+
+        (function(d, t) {
+            var g = document.createElement(t),
+                s = d.getElementsByTagName(t)[0];
+            g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+            g.defer = true;
+            g.async = true;
+            s.parentNode.insertBefore(g, s);
+            g.onload = function() {
+                vapiInstance = window.vapiSDK.run({
+                    apiKey: apiKey,
+                    assistant: assistant,
+                    config: buttonConfig
+                });
+
+                // Handle function calls from the assistant
+                vapiInstance.on('message', (message) => {
+                    if (message.type === 'function-call') {
+                        const functionCall = message.functionCall;
+                        if (functionCall.name === 'getPlanetInfo') {
+                            fetch(`/api/planets/${functionCall.parameters.planetName}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    // Send the planet data back to the assistant
+                                    vapiInstance.sendMessage({
+                                        type: 'function-result',
+                                        result: data
+                                    });
+                                });
+                        } else if (functionCall.name === 'focusOnPlanet') {
+                            const planetName = functionCall.parameters.planetName;
+                            const planetElement = document.querySelector(`.${planetName}`);
+                            if (planetElement) {
+                                planetElement.click();
+                            }
+                        }
+                    }
+                });
+            };
+        })(document, "script");
+    </script>
 </body>
 </html>

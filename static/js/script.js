@@ -75,11 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`/api/planets/${planetName}`);
             const data = await response.json();
-            // Extract the result from the Vapi format response
-            if (data.results && data.results[0] && data.results[0].result) {
-                return data.results[0].result;
-            }
-            return null;
+            return data;
         } catch (error) {
             console.error('Error fetching planet data:', error);
             return null;
