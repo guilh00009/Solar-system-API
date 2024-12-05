@@ -34,48 +34,6 @@
             background: linear-gradient(145deg, #4CAF50, #45a049);
             font-weight: bold;
         }
-        .adentrar-btn {
-            margin-top: 15px;
-            padding: 12px 24px;
-            background: linear-gradient(145deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        .adentrar-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-            background: linear-gradient(145deg, #45a049, #4CAF50);
-        }
-        .adentrar-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
-        }
-        .adentrar-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-        .adentrar-btn:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
         .planet-images {
             display: flex;
             flex-wrap: wrap;
@@ -95,19 +53,18 @@
             transform: scale(1.05);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 1;
-            }
-            20% {
-                transform: scale(25, 25);
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-                transform: scale(40, 40);
-            }
+        .tools-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+        .tool-command {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -157,7 +114,10 @@
                 <p><strong>Day Length:</strong> <span id="planetDay"></span></p>
                 <p><strong>Year Length:</strong> <span id="planetYear"></span></p>
                 <p><strong>Description:</strong> <span id="planetDescription"></span></p>
-                <button class="adentrar-btn" onclick="adentrarPlaneta(currentPlanet)">Adentrar</button>
+                <div class="tools-container">
+                    <p><strong>Available Tools:</strong></p>
+                    <div class="tool-command" id="toolCommand"></div>
+                </div>
                 <div class="planet-images" id="planetImages"></div>
             </div>
         </div>
@@ -166,6 +126,24 @@
     <script>
         let currentPlanet = '';
         let currentLanguage = 'en';
+        const socket = io();
+
+        // Listen for planet exploration updates
+        socket.on('planet_exploration', (data) => {
+            updatePlanetExploration(data);
+        });
+
+        function updatePlanetExploration(data) {
+            const imagesContainer = document.getElementById('planetImages');
+            imagesContainer.innerHTML = '';
+            
+            data.images.forEach(imageUrl => {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = `Image of ${data.planet_info.name}`;
+                imagesContainer.appendChild(img);
+            });
+        }
 
         function changeLanguage(lang) {
             fetch(`/change_language/${lang}`)
@@ -173,7 +151,6 @@
                 .then(data => {
                     if (data.status === 'success') {
                         currentLanguage = lang;
-                        // Update active state of language buttons
                         document.getElementById('en-btn').classList.toggle('active', lang === 'en');
                         document.getElementById('pt-btn').classList.toggle('active', lang === 'pt');
                         if (currentPlanet) {
@@ -181,25 +158,6 @@
                         }
                     }
                 });
-        }
-
-        function adentrarPlaneta(planetName) {
-            if (!planetName) return;
-            
-            fetch(`/adentrar/${planetName}`)
-                .then(response => response.json())
-                .then(data => {
-                    const imagesContainer = document.getElementById('planetImages');
-                    imagesContainer.innerHTML = '';
-                    
-                    data.images.forEach(imageUrl => {
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.alt = `Image of ${planetName}`;
-                        imagesContainer.appendChild(img);
-                    });
-                })
-                .catch(error => console.error('Error:', error));
         }
 
         function updatePlanetInfo(planetName) {
@@ -215,6 +173,10 @@
                     document.getElementById('planetYear').textContent = data.year_length;
                     document.getElementById('planetDescription').textContent = data.description;
                     document.getElementById('planetInfo').style.display = 'block';
+                    
+                    // Update tool command
+                    const toolCommand = document.getElementById('toolCommand');
+                    toolCommand.textContent = `adentrar ${planetName.toLowerCase()}`;
                 });
         }
 

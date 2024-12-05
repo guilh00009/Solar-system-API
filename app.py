@@ -165,15 +165,19 @@ languages = {
     'en': planets  # Original English data
 }
 
-current_language = 'en'
+# Tool definitions
+tools = {
+    'adentrar': {
+        'name': 'adentrar',
+        'description': {
+            'en': 'Enter and explore a planet in detail',
+            'pt': 'Entrar e explorar um planeta em detalhes'
+        },
+        'parameters': ['planet_name']
+    }
+}
 
-@app.route('/change_language/<lang>')
-def change_language(lang):
-    global current_language
-    if lang in ['en', 'pt']:
-        current_language = lang
-        return jsonify({'status': 'success', 'language': lang})
-    return jsonify({'status': 'error', 'message': 'Invalid language'})
+current_language = 'en'
 
 def get_random_planet_images(planet_name, count=5):
     search_url = f"https://www.google.com/search?q={planet_name}+planet&tbm=isch"
@@ -186,6 +190,42 @@ def get_random_planet_images(planet_name, count=5):
         if 'src' in img.attrs and len(img_urls) < count:
             img_urls.append(img['src'])
     return img_urls
+
+@app.route('/change_language/<lang>')
+def change_language(lang):
+    global current_language
+    if lang in ['en', 'pt']:
+        current_language = lang
+        return jsonify({'status': 'success', 'language': lang})
+    return jsonify({'status': 'error', 'message': 'Invalid language'})
+
+@app.route('/tools')
+def get_tools():
+    return jsonify(tools)
+
+@app.route('/tool/adentrar/<planet_name>')
+def use_adentrar_tool(planet_name):
+    try:
+        planet_data = languages[current_language].get(planet_name.lower())
+        if not planet_data:
+            return jsonify({'error': 'Planet not found'}), 404
+        
+        images = get_random_planet_images(planet_name)
+        
+        # Emit a socket event with the planet exploration data
+        exploration_data = {
+            'planet_info': planet_data,
+            'images': images,
+            'message': {
+                'en': f'Exploring {planet_data["name"]}...',
+                'pt': f'Explorando {planet_data["name"]}...'
+            }
+        }
+        socketio.emit('planet_exploration', exploration_data)
+        
+        return jsonify(exploration_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/adentrar/<planet_name>')
 def adentrar_planeta(planet_name):
