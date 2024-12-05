@@ -1,7 +1,9 @@
 Flask
-flask-cors
-flask-socketio
+Flask-CORS
+Flask-SocketIO
 python-engineio
 python-socketio
 requests
+beautifulsoup4
+Pillow
 gunicorn

@@ -5,8 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar System API Demo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .language-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .adentrar-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .adentrar-btn:hover {
+            background-color: #45a049;
+        }
+        .planet-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .planet-images img {
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
+    <div class="language-switch">
+        <button onclick="changeLanguage('en')" id="en-btn">English</button>
+        <button onclick="changeLanguage('pt')" id="pt-btn">Português</button>
+    </div>
+    
     <div class="container">
         <h1>Solar System</h1>
         <div class="solar-system">
@@ -47,10 +84,81 @@
                 <p><strong>Day Length:</strong> <span id="planetDay"></span></p>
                 <p><strong>Year Length:</strong> <span id="planetYear"></span></p>
                 <p><strong>Description:</strong> <span id="planetDescription"></span></p>
+                <button class="adentrar-btn" onclick="adentrarPlaneta(currentPlanet)">Adentrar</button>
+                <div class="planet-images" id="planetImages"></div>
             </div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        let currentPlanet = '';
+        let currentLanguage = 'en';
+
+        function changeLanguage(lang) {
+            fetch(`/change_language/${lang}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        currentLanguage = lang;
+                        document.getElementById('en-btn').style.fontWeight = lang === 'en' ? 'bold' : 'normal';
+                        document.getElementById('pt-btn').style.fontWeight = lang === 'pt' ? 'bold' : 'normal';
+                        if (currentPlanet) {
+                            updatePlanetInfo(currentPlanet);
+                        }
+                    }
+                });
+        }
+
+        function adentrarPlaneta(planetName) {
+            if (!planetName) return;
+            
+            fetch(`/adentrar/${planetName}`)
+                .then(response => response.json())
+                .then(data => {
+                    const imagesContainer = document.getElementById('planetImages');
+                    imagesContainer.innerHTML = '';
+                    
+                    data.images.forEach(imageUrl => {
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        img.alt = `Image of ${planetName}`;
+                        imagesContainer.appendChild(img);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updatePlanetInfo(planetName) {
+            currentPlanet = planetName;
+            fetch(`/api/planets/${planetName}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('planetName').textContent = data.name;
+                    document.getElementById('planetType').textContent = data.type;
+                    document.getElementById('planetDistance').textContent = data.distance;
+                    document.getElementById('planetDiameter').textContent = data.diameter;
+                    document.getElementById('planetDay').textContent = data.day_length;
+                    document.getElementById('planetYear').textContent = data.year_length;
+                    document.getElementById('planetDescription').textContent = data.description;
+                    document.getElementById('planetInfo').style.display = 'block';
+                });
+        }
+
+        // Add click event listeners to planets
+        document.querySelectorAll('.planet').forEach(planet => {
+            planet.addEventListener('click', () => {
+                const planetName = planet.getAttribute('data-planet');
+                updatePlanetInfo(planetName);
+            });
+        });
+
+        // Close button functionality
+        document.querySelector('.close-btn').addEventListener('click', () => {
+            document.getElementById('planetInfo').style.display = 'none';
+            document.getElementById('planetImages').innerHTML = '';
+            currentPlanet = '';
+        });
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     
     <!-- Vapi Voice Assistant Integration -->
